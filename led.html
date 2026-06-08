@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>LED Control</title>
+<style>
+body{background:#111;color:white;font-family:Arial;text-align:center}
+.card{background:#222;padding:15px;margin:10px;border-radius:10px}
+button{padding:10px;margin:5px}
+input{width:80%}
+</style>
+</head>
+<body>
+
+<h1>LED Control BLE</h1>
+
+<div class="card">
+<button onclick="connect()">🔵 Connect BLE</button>
+</div>
+
+<div class="card">
+<h3>Color</h3>
+<button onclick="setColor(255,0,0)">Red</button>
+<button onclick="setColor(0,255,0)">Green</button>
+<button onclick="setColor(0,0,255)">Blue</button>
+<button onclick="setColor(255,255,0)">Yellow</button>
+<button onclick="setColor(255,255,255)">White</button>
+</div>
+
+<div class="card">
+<h3>Brightness</h3>
+<input type="range" min="0" max="100" value="80" id="br">
+</div>
+
+<div class="card">
+<h3>Rainbow</h3>
+<button onclick="rainbow(true)">ON</button>
+<button onclick="rainbow(false)">OFF</button>
+</div>
+
+<div class="card">
+<h3>Speed</h3>
+<input type="range" min="5" max="100" value="20" id="sp">
+</div>
+
+<button onclick="send()">SEND</button>
+
+<script>
+
+let device, char;
+
+async function connect(){
+  device = await navigator.bluetooth.requestDevice({
+    filters:[{name:"LED-ESP32"}],
+    optionalServices:["12345678-1234-1234-1234-1234567890ab"]
+  });
+
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService("12345678-1234-1234-1234-1234567890ab");
+  char = await service.getCharacteristic("abcd1234-1234-1234-1234-abcdef123456");
+
+  alert("Connected!");
+}
+
+let r=255,g=0,b=0;
+let mode=0;
+
+function setColor(R,G,B){r=R;g=G;b=B;mode=0;}
+
+function rainbow(on){mode = on ? 1 : 0;}
+
+async function send(){
+  let br = document.getElementById("br").value;
+  let sp = document.getElementById("sp").value;
+
+  let data = `${r},${g},${b},${br},${mode},${sp}`;
+
+  await char.writeValue(new TextEncoder().encode(data));
+}
+
+</script>
+</body>
+</html>
